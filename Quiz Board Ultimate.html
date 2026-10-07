@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Board Ultimate - Fixed Edition</title>
+    <style id="custom-theme-styles">
+        :root {
+            --bg-color: #0f172a;
+            --bg-image: none;
+            --card-color: #1f2937;
+            --btn-color: #2563eb;
+            --btn-hover: #3b82f6;
+            --text-color: #ffffff;
+        }
+    </style>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        body { 
+            margin: 0; font-family: 'Segoe UI', sans-serif; 
+            background-color: var(--bg-color); background-image: var(--bg-image);
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: var(--text-color); overflow-x: hidden; transition: background 0.3s, color 0.3s;
+        }
+        .container { max-width: 1200px; margin: auto; padding: 20px; }
+        .hidden { display: none !important; }
+
+        .center-menu { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 90vh; gap: 20px; animation: fadeIn 0.6s; }
+        .big-btn { width: 320px; padding: 18px; font-size: 20px; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .big-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .create { background: #2563eb; }
+        .load { background: #10b981; }
+        .edit { background: #f59e0b; color: black; }
+
+
+
+
+
+        
+        .card { background: var(--card-color); padding: 25px; border-radius: 20px; margin-top: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); animation: zoomIn 0.3s; }
+
+        .design-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-top: 10px; }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .color-picker-wrapper input[type="color"] { width: 50px; height: 40px; padding: 0; cursor: pointer; border-radius: 8px; background: none; }
+
+        .category { border: 2px solid var(--btn-color); padding: 15px; margin-bottom: 15px; border-radius: 15px; background: rgba(0,0,0,0.15); }
+        .cat-header { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .cat-collapsed .cat-body { display: none; }
+        .question { background: rgba(255,255,255,0.05); padding: 15px; margin-top: 15px; border-radius: 12px; border-left: 4px solid #f59e0b; }
+
+        .board { display: flex; gap: 15px; overflow-x: auto; padding: 20px 0; }
+        .board-col { min-width: 250px; display: flex; flex-direction: column; gap: 12px; }
+        .board-title { background: var(--btn-color); padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; }
+        .point-cell { height: 100px; font-size: 32px; background: var(--btn-color); opacity: 0.9; font-weight: bold; border: none; border-radius: 14px; color: white; cursor: pointer; transition: 0.2s; }
+        .point-cell:hover:not(:disabled) { background: var(--btn-hover); opacity: 1; transform: scale(1.03); }
+        .point-cell:disabled { background: #334155; opacity: 0.3; cursor: default; }
+
+        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; list-style: none; padding: 0; }
+        .ans-variant { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; font-size: 1.2rem; text-align: center; }
+        .ans-variant.selected { border-color: var(--btn-hover); background: rgba(0,0,0,0.3); transform: scale(1.02); }
+        .ans-variant.correct { background: #065f46 !important; border-color: #10b981 !important; color: #fff; }
+        .ans-variant.wrong-selected { background: #7f1d1d !important; border-color: #ef4444 !important; text-decoration: line-through; }
+
+        .explanation-box { background: rgba(255,255,255,0.05); border-left: 4px solid var(--btn-color); padding: 15px; margin: 20px 0; text-align: left; border-radius: 8px; animation: fadeIn 0.4s ease; }
+
+        input, select, textarea, button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; background: rgba(255,255,255,0.1); color: var(--text-color); box-sizing: border-box; }
+        img { max-width: 100%; max-height: 280px; border-radius: 15px; display: block; margin: 15px auto; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .score-panel { margin-top: 30px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; }
+        .score-card { background: rgba(255,255,255,0.08); padding: 10px 20px; border-radius: 10px; text-align: center; border-bottom: 4px solid var(--btn-color); min-width: 100px; }
+        .del-btn { background: #ef4444 !important; color: white !important; width: auto; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="main-menu" class="center-menu">
+        <h1 style="font-size: 3rem; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">🎮 Quiz Board Ultimate</h1>
+        <button class="big-btn create" onclick="openCreate()">➕ Создать новую</button>
+        <button class="big-btn edit" onclick="openEdit()">✏ Редактировать</button>
+        <button class="big-btn load" onclick="openLoad()">▶ Играть</button>
+    </div>
+
+    <div id="create-screen" class="hidden card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>Редактор викторины</h2>
+            <button onclick="resetTheme(); home();" style="width:auto; background:#4b5563;">🏠 В меню</button>
+        </div>
+        <input id="quizTitle" placeholder="Название игры">
+        
+        <h3 style="margin-top:20px; color:#f59e0b;">🎨 Внешний вид</h3>
+        <div class="design-panel">
+            <div><label>Шаблоны:</label><select id="themePreset" onchange="applyPreset(this.value)"><option value="dark">Тёмная классика</option><option value="light">Светлая</option><option value="cyberpunk">Киберпанк</option><option value="neon">Неон</option></select></div>
+            <div><label>Фон:</label><input type="color" id="colBg" value="#0f172a" onchange="updateLiveTheme()"></div>
+            <div><label>Картинка фона:</label><input type="file" id="bgFileInput" accept="image/*" onchange="uploadBgImage(this)"><input type="hidden" id="bgBase64" value=""><button onclick="clearBgImage()" id="clear-bg-btn" class="hidden del-btn">Удалить</button></div>
+            <div><label>Карточки:</label><input type="color" id="colCard" value="#1f2937" onchange="updateLiveTheme()"></div>
+            <div><label>Кнопки:</label><input type="color" id="colBtn" value="#2563eb" onchange="updateLiveTheme()"></div>
+            <div><label>Текст:</label><input type="color" id="colText" value="#ffffff" onchange="updateLiveTheme()"></div>
+        </div>
+
+        <div id="cats-container" style="margin-top: 25px;"></div>
+        <button onclick="addCat()" style="background:#3b82f6; margin-top:20px; font-weight: bold;">➕ Добавить категорию</button>
+        <hr style="margin:25px 0; opacity:0.1;">
+        <button onclick="saveQuiz()" style="background:#10b981; font-size:1.2rem; padding: 20px; font-weight: bold;">💾 Сохранить JSON</button>
+    </div>
+
+    <div id="edit-screen" class="hidden card">
+        <h2>Загрузить для редактирования</h2>
+        <input type="file" id="editFile" accept=".json">
+        <button onclick="loadForEdit()" class="edit" style="color:white; font-weight: bold;">📂 Открыть</button>
+        <button onclick="home()">⬅ Назад</button>
+    </div>
+
+    <div id="load-screen" class="hidden card">
+        <h2>Начать игру</h2>
+        <input type="file" id="playFile" accept=".json">
+        <button onclick="startQuiz()" class="load" style="font-weight: bold;">▶ Запустить</button>
+        <button onclick="home()">⬅ Назад</button>
+    </div>
+
+    <div id="game-screen" class="hidden card">
+        <div id="game-area"></div>
+        <div id="score-box" class="score-panel">
+            <h3>📊 Текущий счет:</h3>
+            <div id="score-list" style="display:flex; flex-wrap:wrap; gap:15px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let qlist = [];
+let playersScore = {};
+
+/* НАВИГАЦИЯ */
+function hideAll() {
+    document.getElementById("main-menu").classList.add("hidden");
+    document.getElementById("create-screen").classList.add("hidden");
+    document.getElementById("edit-screen").classList.add("hidden");
+    document.getElementById("load-screen").classList.add("hidden");
+    document.getElementById("game-screen").classList.add("hidden");
+}
+function home() { hideAll(); document.getElementById("main-menu").classList.remove("hidden"); }
+function openCreate() { hideAll(); document.getElementById("create-screen").classList.remove("hidden"); document.getElementById("cats-container").innerHTML = ""; applyPreset('dark'); }
+function openEdit() { hideAll(); document.getElementById("edit-screen").classList.remove("hidden"); }
+function openLoad() { hideAll(); document.getElementById("load-screen").classList.remove("hidden"); }
+
+/* СТИЛИ */
+function updateLiveTheme() {
+    const bgCol = document.getElementById("colBg").value;
+    const cardCol = document.getElementById("colCard").value;
+    const btnCol = document.getElementById("colBtn").value;
+    const textCol = document.getElementById("colText").value;
+    const bgImgBase64 = document.getElementById("bgBase64").value;
+    const btnHoverCol = adjustColorBrightness(btnCol, 20);
+
+    document.getElementById("custom-theme-styles").innerHTML = `
+        :root {
+            --bg-color: ${bgCol};
+            --bg-image: ${bgImgBase64 ? `url(${bgImgBase64})` : 'none'};
+            --card-color: ${cardCol};
+            --btn-color: ${btnCol};
+            --btn-hover: ${btnHoverCol};
+            --text-color: ${textCol};
+        }
+    `;
+}
+
+function applyPreset(preset) {
+    const presets = {
+        dark: { bg: "#0f172a", card: "#1f2937", btn: "#2563eb", text: "#ffffff" },
+        light: { bg: "#f1f5f9", card: "#ffffff", btn: "#3b82f6", text: "#000000" },
+        cyberpunk: { bg: "#1a0b2e", card: "#2d124d", btn: "#f43f5e", text: "#00f5ff" },
+        neon: { bg: "#050515", card: "#101026", btn: "#a855f7", text: "#22d3ee" }
+    };
+    if (presets[preset]) {
+        document.getElementById("colBg").value = presets[preset].bg;
+        document.getElementById("colCard").value = presets[preset].card;
+        document.getElementById("colBtn").value = presets[preset].btn;
+        document.getElementById("colText").value = presets[preset].text;
+        updateLiveTheme();
+    }
+}
+
+function uploadBgImage(input) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader(); r.onload = (e) => {
+        document.getElementById("bgBase64").value = e.target.result;
+        document.getElementById("clear-bg-btn").classList.remove("hidden");
+        updateLiveTheme();
+    }; r.readAsDataURL(f);
+}
+
+function clearBgImage() {
+    document.getElementById("bgBase64").value = "";
+    document.getElementById("bgFileInput").value = "";
+    document.getElementById("clear-bg-btn").classList.add("hidden");
+    updateLiveTheme();
+}
+
+function resetTheme() {
+    document.getElementById("custom-theme-styles").innerHTML = `:root { --bg-color: #0f172a; --bg-image: none; --card-color: #1f2937; --btn-color: #2563eb; --btn-hover: #3b82f6; --text-color: #ffffff; }`;
+}
+
+function adjustColorBrightness(hex, percent) {
+    let R = parseInt(hex.substring(1,3),16), G = parseInt(hex.substring(3,5),16), B = parseInt(hex.substring(5,7),16);
+    R = Math.min(255, parseInt(R * (100 + percent) / 100));
+    G = Math.min(255, parseInt(G * (100 + percent) / 100));
+    B = Math.min(255, parseInt(B * (100 + percent) / 100));
+    return "#" + [R,G,B].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+/* ФИКС: РЕДАКТОР (ИСПРАВЛЕННАЯ ЛОГИКА) */
+function addCat(data = null) {
+    const container = document.getElementById("cats-container");
+    const div = document.createElement("div");
+    div.className = "category";
+    div.innerHTML = `
+        <div class="cat-header">
+            <button type="button" style="width:auto; background:#4b5563" onclick="toggleCat(this)">▼</button>
+            <input class="catName" placeholder="Название категории" value="${data ? data.name : ''}" style="margin:0">
+            <button type="button" class="del-btn" onclick="this.closest('.category').remove()">❌</button>
+        </div>
+        <div class="cat-body">
+            <div class="questions-list"></div>
+            <button type="button" onclick="addQ(this)" style="background:var(--btn-color)">➕ Добавить вопрос</button>
+        </div>
+    `;
+    container.appendChild(div);
+    if(data && data.q) data.q.forEach(q => addQ(div.querySelector(".cat-body button"), q));
+}
+
+function toggleCat(btn) { btn.closest('.category').classList.toggle('cat-collapsed'); }
+
+function addQ(btn, data = null) {
+    const qCont = btn.closest('.cat-body').querySelector(".questions-list");
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `
+        <div style="display:flex; justify-content:space-between">
+            <strong>Вопрос</strong>
+            <button type="button" class="del-btn" onclick="this.closest('.question').remove()">Удалить</button>
+        </div>
+        <input class="qtext" placeholder="Текст вопроса" value="${data ? data.text : ''}">
+        <input class="points" type="number" value="${data ? data.points : 100}">
+        <select class="qtype" onchange="toggleAns(this)">
+            <option value="single" ${data?.type==='single'?'selected':''}>Текстовый ответ</option>
+            <option value="multi" ${data?.type==='multi'?'selected':''}>Варианты (Тест)</option>
+        </select>
+        <div class="ans-list"></div>
+        <button type="button" class="hidden add-ans-btn" onclick="addAns(this)">+ Вариант</button>
+        <textarea class="explain" placeholder="Объяснение">${data ? data.explain : ''}</textarea>
+        <input type="file" accept="image/*" onchange="encodeQImage(this)">
+        <input type="hidden" class="imgBase64" value="${data ? data.image : ''}">
+        ${data && data.image ? `<img src="${data.image}">` : ''}
+    `;
+    qCont.appendChild(div);
+    const ansBtn = div.querySelector(".add-ans-btn");
+    if(data?.answers) data.answers.forEach(a => addAns(ansBtn, a.text, a.correct));
+    else addAns(ansBtn, "", true);
+    toggleAns(div.querySelector(".qtype"));
+}
+
+function toggleAns(s) { s.closest('.question').querySelector(".add-ans-btn").classList.toggle("hidden", s.value !== 'multi'); }
+
+function addAns(btn, t="", c=false) {
+    const list = btn.closest('.question').querySelector(".ans-list");
+    const div = document.createElement("div"); div.style.display="flex"; div.style.gap="10px"; div.style.marginTop="5px";
+    div.innerHTML = `<input type="checkbox" ${c?'checked':''} style="width:25px"><input value="${t}" placeholder="Вариант"><button type="button" class="del-btn" onclick="this.parentElement.remove()">✕</button>`;
+    list.appendChild(div);
+}
+
+function encodeQImage(i) {
+    const r = new FileReader(); r.onload = (e) => {
+        i.nextElementSibling.value = e.target.result;
+        let img = i.parentElement.querySelector("img") || document.createElement("img");
+        img.src = e.target.result; i.parentElement.appendChild(img);
+    }; if(i.files[0]) r.readAsDataURL(i.files[0]);
+}
+
+/* СОХРАНЕНИЕ И ЗАГРУЗКА */
+function saveQuiz() {
+    const data = { 
+        title: document.getElementById("quizTitle").value || "Игра", 
+        theme: { bg: document.getElementById("colBg").value, card: document.getElementById("colCard").value, btn: document.getElementById("colBtn").value, text: document.getElementById("colText").value, bgImg: document.getElementById("bgBase64").value },
+        cats: [] 
+    };
+    document.querySelectorAll(".category").forEach(cEl => {
+        const cat = { name: cEl.querySelector(".catName").value, q: [] };
+        cEl.querySelectorAll(".question").forEach(qEl => {
+            cat.q.push({
+                text: qEl.querySelector(".qtext").value, points: parseInt(qEl.querySelector(".points").value) || 0, type: qEl.querySelector(".qtype").value,
+                answers: Array.from(qEl.querySelectorAll(".ans-list > div")).map(i => ({ text: i.querySelectorAll("input")[1].value, correct: i.querySelectorAll("input")[0].checked })),
+                explain: qEl.querySelector(".explain").value, image: qEl.querySelector(".imgBase64").value
+            });
+        });
+        data.cats.push(cat);
+    });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"})); a.download = data.title + ".json"; a.click();
+}
+
+function loadForEdit() {
+    const f = document.getElementById("editFile").files[0]; if(!f) return;
+    const r = new FileReader(); r.onload = (e) => {
+        const d = JSON.parse(e.target.result); openCreate();
+        document.getElementById("quizTitle").value = d.title;
+        if(d.theme) {
+            document.getElementById("colBg").value = d.theme.bg; document.getElementById("colCard").value = d.theme.card;
+            document.getElementById("colBtn").value = d.theme.btn; document.getElementById("colText").value = d.theme.text;
+            document.getElementById("bgBase64").value = d.theme.bgImg; updateLiveTheme();
+        }
+        d.cats.forEach(c => addCat(c));
+    }; r.readAsText(f);
+}
+
+/* ИГРА */
+function startQuiz() {
+    const f = document.getElementById("playFile").files[0]; if(!f) return;
+    const r = new FileReader(); r.onload = (e) => {
+        const d = JSON.parse(e.target.result); qlist = []; playersScore = {};
+        if(d.theme) { document.getElementById("bgBase64").value = d.theme.bgImg || ""; updateLiveTheme(); }
+        d.cats.forEach(c => c.q.forEach(q => qlist.push({...q, cat: c.name, id: Math.random(), used: false})));
+        hideAll(); document.getElementById("game-screen").classList.remove("hidden"); renderBoard(); updateScore();
+    }; r.readAsText(f);
+}
+
+function renderBoard() {
+    const area = document.getElementById("game-area");
+    if(qlist.every(q => q.used)) return finish();
+    area.innerHTML = `<button onclick="resetTheme(); home();" style="width:auto; background:#4b5563">🔙 Выход</button><div class="board" id="grid"></div>`;
+    const grouped = {}; qlist.forEach(q => { if(!grouped[q.cat]) grouped[q.cat] = []; grouped[q.cat].push(q); });
+    Object.entries(grouped).forEach(([name, qs]) => {
+        const col = document.createElement("div"); col.className = "board-col"; col.innerHTML = `<div class="board-title">${name}</div>`;
+        qs.sort((a,b)=>a.points-b.points).forEach(q => {
+            const btn = document.createElement("button"); btn.className = "point-cell"; btn.innerText = q.points; btn.disabled = q.used;
+            btn.onclick = () => showQ(q); col.appendChild(btn);
+        });
+        document.getElementById("grid").appendChild(col);
+    });
+}
+
+function showQ(q) {
+    const area = document.getElementById("game-area");
+    let ansHTML = q.type === "multi" ? `<div class="ans-grid">` + q.answers.map(a => `<div class="ans-variant" onclick="this.classList.toggle('selected')" data-correct="${a.correct}">${a.text}</div>`).join("") + `</div>` : `<div id="single-ans" class="hidden card" style="background:rgba(0,0,0,0.4); border:2px solid var(--btn-color); margin-bottom:20px;"><h2>${q.answers[0]?.text || ''}</h2></div>`;
+    area.innerHTML = `
+        <div class="card" style="text-align:center">
+            <h2 style="opacity: 0.7;">${q.cat}: ${q.points}</h2>
+            ${q.image ? `<img src="${q.image}">` : ''}
+            <h1 style="margin:20px 0;">${q.text}</h1>
+            ${ansHTML}
+            <div id="explanation-content" class="hidden explanation-box"><strong>Объяснение:</strong><p>${q.explain || 'Нет комментария.'}</p></div>
+            <button id="rev-btn" onclick="revealGameAns('${q.type}')" style="background:var(--btn-color); font-weight:bold;">ПОКАЗАТЬ ОТВЕТ</button>
+            <div id="after-ans" class="hidden"><input id="winners" placeholder="Имена через запятую"><button onclick="award('${q.id}', ${q.points})" style="background:#10b981;">Начислить</button><button onclick="skip('${q.id}')" style="background:#4b5563;">Никто не ответил</button></div>
+        </div>`;
+}
+
+function revealGameAns(type) {
+    document.getElementById("rev-btn").classList.add("hidden"); document.getElementById("after-ans").classList.remove("hidden");
+    document.getElementById("explanation-content").classList.remove("hidden");
+    if (type === "multi") document.querySelectorAll(".ans-variant").forEach(el => { if (el.dataset.correct === "true") el.classList.add("correct"); if (el.classList.contains("selected") && el.dataset.correct !== "true") el.classList.add("wrong-selected"); });
+    else document.getElementById("single-ans")?.classList.remove("hidden");
+}
+
+function award(id, pts) {
+    const names = document.getElementById("winners").value.split(",").map(n => n.trim()).filter(n => n);
+    if(names.length) names.forEach(n => playersScore[n] = (playersScore[n] || 0) + (pts/names.length));
+    qlist.find(q => q.id == id).used = true; updateScore(); renderBoard();
+}
+
+function skip(id) { qlist.find(q => q.id == id).used = true; renderBoard(); }
+
+function updateScore() {
+    document.getElementById("score-list").innerHTML = Object.entries(playersScore).sort((a,b)=>b[1]-a[1]).map(([n, s]) => `<div class="score-card"><div>${n}</div><div style="color:#fbbf24; font-weight:bold;">${Math.floor(s)}</div></div>`).join("");
+}
+
+function finish() {
+    const winners = Object.entries(playersScore).sort((a,b)=>b[1]-a[1]);
+    document.getElementById("game-area").innerHTML = `<div class="card" style="text-align:center"><h1>🏆 Финал!</h1><div>${winners.map(([n, s], i) => `<div>${i+1}. ${n}: ${Math.floor(s)}</div>`).join("")}</div><button onclick="location.reload()">В начало</button></div>`;
+}
+</script>
+</body>
+</html>
